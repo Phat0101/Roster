@@ -1,72 +1,56 @@
-import React from 'react';
-import { useTable } from 'react-table';
+import React, { useState } from 'react';
 import roster from '../generate/roster.json';
 
-function Table() {
-  const data = React.useMemo(() => roster, []);
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: 'Month',
-        accessor: 'Month',
-      },
-      {
-        Header: 'Week',
-        accessor: 'Week',
-      },
-      {
-        Header: 'Date',
-        accessor: 'Date',
-      },
-      {
-        Header: 'AM',
-        accessor: 'AM',
-      },
-      {
-        Header: 'PM',
-        accessor: 'PM',
-      },
-      {
-        Header: 'Backup',
-        accessor: 'Backup',
-      },
-    ],
-    []
-  );
+function Roster() {
+  const [filter, setFilter] = useState('');
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns, data });
+  function handleFilterChange(event) {
+    setFilter(event.target.value);
+  }
+
+  function getFilteredRoster() {
+    return roster.filter(item => 
+      item.AM.includes(filter) || 
+      item.PM.includes(filter) || 
+      item.Backup.includes(filter)
+    );
+  }
+
+  const staffNames = Array.from(new Set(roster.flatMap(item => [item.AM, item.PM, item.Backup])));
 
   return (
-    <table {...getTableProps()} style={{ width: '100%', margin: '0 auto', borderCollapse: 'collapse' }}>
-      <thead>
-        {headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps()} style={{ borderBottom: 'solid 3px #ddd', background: '#f3f3f3', color: '#333', fontWeight: 'bold', padding: '10px', textAlign: 'left' }}>{column.render('Header')}</th>
-            ))}
-          </tr>
+    <div className="p-6">
+      <select value={filter} onChange={handleFilterChange} className="p-2 border rounded">
+        <option value="">Select a staff</option>
+        {staffNames.map(name => (
+          <option key={name} value={name}>{name}</option>
         ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
-          prepareRow(row);
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()} style={{ padding: '10px', borderBottom: 'solid 1px #ddd' }}>{cell.render('Cell')}</td>
-              ))}
+      </select>      <table className="w-full mt-4 text-left border-collapse">
+        <thead>
+          <tr>
+            <th className="p-2 border">Month</th>
+            <th className="p-2 border">Week</th>
+            <th className="p-2 border">Date</th>
+            <th className="p-2 border">AM</th>
+            <th className="p-2 border">PM</th>
+            <th className="p-2 border">Backup</th>
+          </tr>
+        </thead>
+        <tbody>
+          {getFilteredRoster().map((item, index) => (
+            <tr key={index} className="border">
+              <td className="p-2 border">{item.Month}</td>
+              <td className="p-2 border">{item.Week}</td>
+              <td className="p-2 border">{item.Date}</td>
+              <td className="p-2 border">{item.AM}</td>
+              <td className="p-2 border">{item.PM}</td>
+              <td className="p-2 border">{item.Backup}</td>
             </tr>
-          );
-        })}
-      </tbody>
-    </table>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
-export default Table;
+export default Roster;
