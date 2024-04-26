@@ -4,7 +4,7 @@ const { Parser } = require('json2csv');
 
 function loadFromList(file) {
   let elements = fs.readFileSync(file).toString().split('\n');
-  elements = elements.filter(s => s.charAt(0) != '#');
+  elements = elements.filter(s => s.charAt(0) !== '#');
   elements = elements.filter(String);
 
   let dates = [];
@@ -27,13 +27,13 @@ function loadFromList(file) {
 
 function getNextWorkingDate(d) {
   let newDate = moment(d).add(1, 'days');
-  while (newDate.day() == 0 || newDate.day() == 6) {
+  while (newDate.day() === 0 || newDate.day() === 6) {
     newDate.add(1, 'days');
   }
   return newDate;
 }
 
-let startDate = '2024-03-18';
+let startDate = '2024-03-18'; // start date has to be Monday
 let durationDays = 16 * 5; // test 16 weeks
 
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];

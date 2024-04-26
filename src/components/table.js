@@ -106,6 +106,20 @@ function Roster() {
         ))}
       </select>
       <button onClick={() => generateICalendarFile(getFilteredRoster())} className="p-2 mt-4 bg-blue-500 text-white rounded">Download iCalendar File</button>
+      <div className="flex space-x-4 mb-4">
+        <div className="flex items-center">
+          <div className="py-2 px-10 shadow-md no-underline rounded-full am-color"></div>
+          <div>9h30-12h30</div>
+        </div>
+        <div className="flex items-center">
+          <div className="py-2 px-10 shadow-md no-underline rounded-full pm-color"></div>
+          <div>12h30-15h30</div>
+        </div>
+        <div className="flex items-center">
+          <div className="py-2 px-10 shadow-md no-underline rounded-full backup-color"></div>
+          <div>Backup</div>
+        </div>
+      </div>
       {groupedRoster.map((week, index) => (
         <table key={index} className="w-full mt-4 text-left border-collapse">
           <thead>
