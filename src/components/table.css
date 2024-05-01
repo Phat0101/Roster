@@ -91,4 +91,7 @@ th:first-child, td:first-child {
 	  font-size: 0.7em; 
 	  padding: 5px;
   }
+  .am-color, .pm-color, .backup-color {
+    padding: 8px 20px;
+  }
 }

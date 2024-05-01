@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
 const moment = require('moment');
 const { Parser } = require('json2csv');
@@ -13,16 +15,33 @@ function loadFromList(file) {
       let [start, end] = element.split(' - ');
       let currentDate = moment(start, 'DD/MM/YYYY');
       let endDate = moment(end, 'DD/MM/YYYY');
+
+      if (!currentDate.isValid() || !endDate.isValid()) {
+        throw new Error(`Invalid date range in ${file}: ${element}`);
+      }
+
       while (currentDate.isSameOrBefore(endDate)) {
         dates.push(currentDate.format('DD/MM/YYYY'));
         currentDate.add(1, 'days');
       }
     } else {
+      let date = moment(element, 'DD/MM/YYYY', true); // true for strict parsing so that 31/02/2024 or 01012024 is invalid
+      if (!date.isValid()) {
+        throw new Error(`Invalid date in ${file}: ${element}`);
+      }
       dates.push(element);
     }
   }
 
   return dates;
+}
+
+function loadStaffList(file) {
+  let elements = fs.readFileSync(file).toString().split('\n');
+  elements = elements.filter(s => s.charAt(0) !== '#'); // Ignore lines starting with '#'
+  elements = elements.filter(String); // Ignore empty lines
+
+  return elements;
 }
 
 function getNextWorkingDate(d) {
@@ -39,7 +58,7 @@ let durationDays = 16 * 5; // test 16 weeks
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];
 console.log(holidays.length, 'days off this year!');
 
-let staff = loadFromList('staff.txt');
+let staff = loadStaffList('staff.txt');
 console.log(staff.length, 'staff');
 
 let dayCounter = 0, staffCounter = 10, holidayFlag = false;

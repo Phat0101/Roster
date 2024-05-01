@@ -3,7 +3,7 @@ import roster from '../generate/roster.json';
 import './table.css';
 import { createEvents } from 'ics';
 
-function Roster() {
+function Table() {
   const [staffFilter, setStaffFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
 
@@ -51,22 +51,22 @@ function Roster() {
         return {
           start: [year, month, day, 9, 30],
           duration: { hours: 3 },
-          title: `Roster for ${item.AM}`,
-          description: `AM: ${item.AM}`,
+          title: `Roster for Morning`,
+          description: `Your backup: ${item.Backup}`,
         };
       } else if (item.PM === staffFilter) {
         return {
           start: [year, month, day, 12, 30],
           duration: { hours: 3 },
-          title: `Roster for ${item.PM}`,
-          description: `PM: ${item.PM}`,
+          title: `Roster for Afternoon`,
+          description: `Your backup: ${item.Backup}`,
         };
       } else if (item.Backup === staffFilter) {
         return {
           start: [year, month, day, 9, 30],
           duration: { hours: 6 },
-          title: `Roster for ${item.Backup}`,
-          description: `Backup: ${item.Backup}`,
+          title: `Roster for Backup`,
+          description: `Morning: ${item.AM}\nAfternoon: ${item.PM}`,
         };
       }
     });
@@ -77,8 +77,8 @@ function Roster() {
       return;
     }
 
-    const blob = new Blob([value], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    const eventFile = new Blob([value], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(eventFile);
 
     const link = document.createElement('a');
     link.href = url;
@@ -132,13 +132,13 @@ function Roster() {
           </thead>
           <tbody>
             <tr className='am-row'>
-              <td className="p-2 border">AM</td>
+              <td className="p-2 border">Morning</td>
               {Array(5).fill().map((_, index) => (
                 <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.AM || '-'}</td>
               ))}
             </tr>
             <tr className='pm-row'>
-              <td className="p-2 border">PM</td>
+              <td className="p-2 border">Afternoon</td>
               {Array(5).fill().map((_, index) => (
                 <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.PM || '-'}</td>
               ))}
@@ -156,4 +156,4 @@ function Roster() {
   );
 }
 
-export default Roster;
+export default Table;
