@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import roster from '../generate/roster.json';
 import './table.css';
 import { createEvents } from 'ics';
+import moment from 'moment';
 
 function Table() {
   const [staffFilter, setStaffFilter] = useState('');
@@ -126,7 +127,10 @@ function Table() {
             <tr>
               <th className="p-2 border w-1/6">Week {week.Week}</th>
               {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
-                <th key={index} className="p-2 border w-1/6">{day} <br></br>{week.Days[index]?.Date || ''}</th>
+                <th key={index} className="p-2 border w-1/6">
+                  {day} <br></br>
+                  {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMMM') : '-'}
+                </th>
               ))}
             </tr>
           </thead>
