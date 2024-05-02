@@ -1,48 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
 const moment = require('moment');
-const { Parser } = require('json2csv');
-
-function loadFromList(file) {
-  let elements = fs.readFileSync(file).toString().split('\n');
-  elements = elements.filter(s => s.charAt(0) !== '#');
-  elements = elements.filter(String);
-
-  let dates = [];
-  for (let element of elements) {
-    if (element.includes('-')) {
-      let [start, end] = element.split(' - ');
-      let currentDate = moment(start, 'DD/MM/YYYY');
-      let endDate = moment(end, 'DD/MM/YYYY');
-
-      if (!currentDate.isValid() || !endDate.isValid()) {
-        throw new Error(`Invalid date range in ${file}: ${element}`);
-      }
-
-      while (currentDate.isSameOrBefore(endDate)) {
-        dates.push(currentDate.format('DD/MM/YYYY'));
-        currentDate.add(1, 'days');
-      }
-    } else {
-      let date = moment(element, 'DD/MM/YYYY', true); // true for strict parsing so that 31/02/2024 or 01012024 is invalid
-      if (!date.isValid()) {
-        throw new Error(`Invalid date in ${file}: ${element}`);
-      }
-      dates.push(element);
-    }
-  }
-
-  return dates;
-}
-
-function loadStaffList(file) {
-  let elements = fs.readFileSync(file).toString().split('\n');
-  elements = elements.filter(s => s.charAt(0) !== '#'); // Ignore lines starting with '#'
-  elements = elements.filter(String); // Ignore empty lines
-
-  return elements;
-}
+const readlineSync = require('readline-sync');
+const { loadFromList, loadStaffList, loadStaffLeave, writeToFile } = require('./load.js');
 
 function getNextWorkingDate(d) {
   let newDate = moment(d).add(1, 'days');
@@ -52,13 +12,34 @@ function getNextWorkingDate(d) {
   return newDate;
 }
 
-let startDate = '2024-03-18'; // start date has to be Monday
-let durationDays = 16 * 5; // test 16 weeks
+// let startDate = '2024-03-18'; // start date has to be Monday
+let startDate;
+let durationWeeks;
 
+while (true) {
+  startDate = readlineSync.question('Enter the start date (YYYY-MM-DD): ');
+  if (moment(startDate, 'YYYY-MM-DD', true).isValid()) {
+    let date = moment(startDate);
+    if (date.day() === 1) { break; }
+    else { console.log('Start date has to be a Monday.') };
+  } else {
+    console.log('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');
+  };
+}
+
+while (true) {
+  durationWeeks = readlineSync.question('Enter the duration in weeks: ');
+  if (!isNaN(durationWeeks) && Number(durationWeeks) > 0) break;
+  console.log('Invalid duration. Please enter a positive number.');
+}
+
+let durationDays = Number(durationWeeks) * 5;
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];
-console.log(holidays.length, 'days off this year!');
-
 let staff = loadStaffList('staff.txt');
+let staffLeave = loadStaffLeave('staffleave.txt', staff);
+
+console.log(staffLeave);
+console.log(holidays.length, 'days off this year!');
 console.log(staff.length, 'staff');
 
 let dayCounter = 0, staffCounter = 10, holidayFlag = false;
@@ -97,7 +78,6 @@ while (dayCounter < durationDays) {
   if (!holidayFlag) { staffCounter++; }
 }
 
-fs.writeFileSync('roster.json', JSON.stringify(roster, null, 2));
-const csvParser = new Parser();
-const csvData = csvParser.parse(roster);
-fs.writeFileSync('roster.csv', csvData);
+writeToFile(roster);
+
+
