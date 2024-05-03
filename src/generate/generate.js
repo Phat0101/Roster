@@ -12,6 +12,16 @@ function getNextWorkingDate(d) {
   return newDate;
 }
 
+function isStaffOnLeave(staffName, currentDate, staffLeave) {
+  let leaves = staffLeave.filter(leave => leave.staffName === staffName);
+  for (let leave of leaves) {
+    if (currentDate.isBetween(leave.startDate, leave.endDate, undefined, '[]')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // let startDate = '2024-03-18'; // start date has to be Monday
 let startDate;
 let durationWeeks;
@@ -46,6 +56,7 @@ let dayCounter = 0, staffCounter = 10, holidayFlag = false;
 let nowDate = moment(startDate);
 
 let roster = [];
+let amStaffCounter = 10, pmStaffCounter = 14, backupStaffCounter = 18;
 
 while (dayCounter < durationDays) {
   let week = nowDate.week();
@@ -62,20 +73,35 @@ while (dayCounter < durationDays) {
       Backup: '-'
     });
   } else {
+    let amStaff, pmStaff, backupStaff;
+    do {
+      amStaff = staff[amStaffCounter % staff.length];
+      amStaffCounter++;
+    } while (isStaffOnLeave(amStaff, nowDate, staffLeave));
+
+    do {
+      pmStaff = staff[pmStaffCounter % staff.length];
+      pmStaffCounter++;
+    } while (isStaffOnLeave(pmStaff, nowDate, staffLeave));
+
+    do {
+      backupStaff = staff[backupStaffCounter % staff.length];
+      backupStaffCounter++;
+    } while (isStaffOnLeave(backupStaff, nowDate, staffLeave));
+
     roster.push({
       Month: nowDate.format('MMMM'),
       Week: week,
       Date: dmy,
-      AM: staff[staffCounter % staff.length],
-      PM: staff[(staffCounter + 4) % staff.length],
-      Backup: staff[(staffCounter + 8) % staff.length]
+      AM: amStaff,
+      PM: pmStaff,
+      Backup: backupStaff
     });
   }
 
   nowDate = getNextWorkingDate(nowDate);
   dayCounter++;
 
-  if (!holidayFlag) { staffCounter++; }
 }
 
 writeToFile(roster);
