@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const moment = require('moment');
-const readlineSync = require('readline-sync');
+const minimist = require('minimist');
 const { loadFromList, loadStaffList, loadStaffLeave, writeToFile } = require('./load.js');
 
 function getNextWorkingDate(d) {
@@ -22,38 +22,45 @@ function isStaffOnLeave(staffName, currentDate, staffLeave) {
   return false;
 }
 
-// let startDate = '2024-03-18'; // start date has to be Monday
-let startDate;
-let durationWeeks;
+let args = minimist(process.argv.slice(2), {
+  string: ['startdate', 'weeks'],
+  default: {
+    startdate: moment('2024-03-18').format('YYYY-MM-DD'),
+    weeks: 12
+  }
+});
 
-while (true) {
-  startDate = readlineSync.question('Enter the start date (YYYY-MM-DD): ');
-  if (moment(startDate, 'YYYY-MM-DD', true).isValid()) {
-    let date = moment(startDate);
-    if (date.day() === 1) { break; }
-    else { console.log('Start date has to be a Monday.') };
-  } else {
-    console.log('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');
-  };
+let startDate = args.startdate;
+let durationWeeks = args.weeks;
+let formats = ['YYYY-MM-DD', 'DD-MM-YYYY', 'DDMMYYYY', 'DD/MM/YYYY'];
+if (!moment(startDate, formats, true).isValid()) {
+  console.error('Invalid start date. Please enter a valid date in the format YYYY-MM-DD.');
+  process.exit(1);
 }
 
-while (true) {
-  durationWeeks = readlineSync.question('Enter the duration in weeks: ');
-  if (!isNaN(durationWeeks) && Number(durationWeeks) > 0) break;
-  console.log('Invalid duration. Please enter a positive number.');
+// start date has to be Monday
+startDate = moment(startDate, formats, true);
+if (startDate.day() !== 1) {
+  console.error('Start date has to be a Monday.');
+  process.exit(1);
 }
 
+if (isNaN(durationWeeks) || Number(durationWeeks) <= 0 || Number(durationWeeks) > 52) {
+  console.error('Invalid duration. Please enter a number within 1-52.');
+  process.exit(1);
+}
 let durationDays = Number(durationWeeks) * 5;
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];
 let staff = loadStaffList('staff.txt');
 let staffLeave = loadStaffLeave('staffleave.txt', staff);
 
+console.log(startDate, 'for', durationWeeks, 'weeks');
 console.log(staffLeave);
 console.log(holidays.length, 'days off this year!');
 console.log(staff.length, 'staff');
 
-let dayCounter = 0, staffCounter = 10, holidayFlag = false;
-let nowDate = moment(startDate);
+let dayCounter = 0, holidayFlag = false;
+let nowDate = startDate;
 
 let roster = [];
 let amStaffCounter = 10, pmStaffCounter = 14, backupStaffCounter = 18;
@@ -101,7 +108,6 @@ while (dayCounter < durationDays) {
 
   nowDate = getNextWorkingDate(nowDate);
   dayCounter++;
-
 }
 
 writeToFile(roster);

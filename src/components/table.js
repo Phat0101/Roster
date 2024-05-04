@@ -4,7 +4,7 @@ import './table.css';
 import { createEvents } from 'ics';
 import moment from 'moment';
 
-function Table() {
+function Table({darkMode}) {
   const [staffFilter, setStaffFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
 
@@ -93,7 +93,7 @@ function Table() {
   const months = Array.from(new Set(roster.map(item => item.Month)));
   const groupedRoster = groupByWeek(getFilteredRoster());
   return (
-    <div className="p-6">
+    <div className={`p-6 ${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'}`}>
       <select value={staffFilter} onChange={handleStaffFilterChange} className="p-2 border rounded">
         <option value="">Select a staff</option>
         {staffNames.map(name => (
@@ -107,7 +107,7 @@ function Table() {
         ))}
       </select>
       <button onClick={() => generateICalendarFile(getFilteredRoster())} className="p-2 mt-4 bg-blue-500 text-white rounded">Download iCalendar File</button>
-      <div className="flex space-x-4 mb-4">
+      <div className={`flex justify-end space-x-4 mb-4 ${darkMode? 'text-white': 'text-black'}`}>
         <div className="flex items-center">
           <div className="py-2 px-10 shadow-md no-underline rounded-full am-color"></div>
           <div>9h30-12h30</div>
