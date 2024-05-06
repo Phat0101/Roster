@@ -42,15 +42,15 @@ th:first-child, td:first-child {
 }
 
 .am-row {
-  background-color: #c0e7f4;
+  background: linear-gradient(to right,#e9f9ff, #cff2fe , #e9f9ff);
 }
 
 .pm-row {
-  background-color: #f8d2f8;
+  background: linear-gradient(to right, #ffebff, #fbddfb , #ffebff);
 }
 
 .backup-row {
-  background-color: #c1fec1;
+  background: linear-gradient(to right, #dbffdb, #c4ffc4, #dbffdb);
 }
 
 .empty-day {
@@ -63,7 +63,7 @@ th:first-child, td:first-child {
 
 @media screen and (max-width: 600px) {
 	th, td {
-	  font-size: 0.7em; 
+	  font-size: 0.65em; 
 	  padding: 5px;
   }
   .am-color, .pm-color, .backup-color {

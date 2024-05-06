@@ -11,7 +11,7 @@ function App() {
   };
 
   return (
-    <div className={`App ${darkMode ? 'dark' : ''}`}>
+    <div className={`App ${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'} font-sans`}>
       <NavBar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
       <Table darkMode={darkMode} />
     </div>

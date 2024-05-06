@@ -3,8 +3,9 @@ import roster from '../generate/roster.json';
 import './table.css';
 import { createEvents } from 'ics';
 import moment from 'moment';
+import { FaDownload } from 'react-icons/fa';
 
-function Table({darkMode}) {
+function Table({ darkMode }) {
   const [staffFilter, setStaffFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
 
@@ -94,20 +95,26 @@ function Table({darkMode}) {
   const groupedRoster = groupByWeek(getFilteredRoster());
   return (
     <div className={`p-6 ${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'}`}>
-      <select value={staffFilter} onChange={handleStaffFilterChange} className="p-2 border rounded">
-        <option value="">Select a staff</option>
-        {staffNames.map(name => (
-          <option key={name} value={name}>{name}</option>
-        ))}
-      </select>
-      <select value={monthFilter} onChange={handleMonthFilterChange} className="p-2 border rounded ml-4">
-        <option value="">Select a month</option>
-        {months.map(month => (
-          <option key={month} value={month}>{month}</option>
-        ))}
-      </select>
-      <button onClick={() => generateICalendarFile(getFilteredRoster())} className="p-2 mt-4 bg-blue-500 text-white rounded">Download iCalendar File</button>
-      <div className={`flex justify-end space-x-4 mb-4 ${darkMode? 'text-white': 'text-black'}`}>
+      <div className="flex justify-between items-center mb-2">
+        <div>
+          <select value={staffFilter} onChange={handleStaffFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
+            <option value="">Select a staff</option>
+            {staffNames.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+          <select value={monthFilter} onChange={handleMonthFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
+            <option value="">Select a month</option>
+            {months.map(month => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => generateICalendarFile(getFilteredRoster())} className="p-2 bg-blue-500 text-white rounded mt-2">
+          <FaDownload className="text-2xl " />
+        </button>
+      </div>
+      <div className={`flex justify-end space-x-4 mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
         <div className="flex items-center">
           <div className="py-2 px-10 shadow-md no-underline rounded-full am-color"></div>
           <div>9h30-12h30</div>
@@ -122,7 +129,7 @@ function Table({darkMode}) {
         </div>
       </div>
       {groupedRoster.map((week, index) => (
-        <table key={index} className="w-full mt-4 text-left border-collapse">
+        <table key={index} className="w-full mt-4 text-left border-collapse shadow-md">
           <thead>
             <tr>
               <th className="p-2 border w-1/6">Week {week.Week}</th>
