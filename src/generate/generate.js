@@ -1,48 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
 const moment = require('moment');
-const { Parser } = require('json2csv');
-
-function loadFromList(file) {
-  let elements = fs.readFileSync(file).toString().split('\n');
-  elements = elements.filter(s => s.charAt(0) !== '#');
-  elements = elements.filter(String);
-
-  let dates = [];
-  for (let element of elements) {
-    if (element.includes('-')) {
-      let [start, end] = element.split(' - ');
-      let currentDate = moment(start, 'DD/MM/YYYY');
-      let endDate = moment(end, 'DD/MM/YYYY');
-
-      if (!currentDate.isValid() || !endDate.isValid()) {
-        throw new Error(`Invalid date range in ${file}: ${element}`);
-      }
-
-      while (currentDate.isSameOrBefore(endDate)) {
-        dates.push(currentDate.format('DD/MM/YYYY'));
-        currentDate.add(1, 'days');
-      }
-    } else {
-      let date = moment(element, 'DD/MM/YYYY', true); // true for strict parsing so that 31/02/2024 or 01012024 is invalid
-      if (!date.isValid()) {
-        throw new Error(`Invalid date in ${file}: ${element}`);
-      }
-      dates.push(element);
-    }
-  }
-
-  return dates;
-}
-
-function loadStaffList(file) {
-  let elements = fs.readFileSync(file).toString().split('\n');
-  elements = elements.filter(s => s.charAt(0) !== '#'); // Ignore lines starting with '#'
-  elements = elements.filter(String); // Ignore empty lines
-
-  return elements;
-}
+const minimist = require('minimist');
+const { loadFromList, loadStaffList, loadStaffLeave, writeToFile } = require('./load.js');
 
 function getNextWorkingDate(d) {
   let newDate = moment(d).add(1, 'days');
@@ -52,19 +12,58 @@ function getNextWorkingDate(d) {
   return newDate;
 }
 
-let startDate = '2024-03-18'; // start date has to be Monday
-let durationDays = 16 * 5; // test 16 weeks
+function isStaffOnLeave(staffName, currentDate, staffLeave) {
+  let leaves = staffLeave.filter(leave => leave.staffName === staffName);
+  for (let leave of leaves) {
+    if (currentDate.isBetween(leave.startDate, leave.endDate, undefined, '[]')) {
+      return true;
+    }
+  }
+  return false;
+}
 
+let args = minimist(process.argv.slice(2), {
+  string: ['startdate', 'weeks'],
+  default: {
+    startdate: moment('2024-03-18').format('YYYY-MM-DD'),
+    weeks: 12
+  }
+});
+
+let startDate = args.startdate;
+let durationWeeks = args.weeks;
+let formats = ['YYYY-MM-DD', 'DD-MM-YYYY', 'DDMMYYYY', 'DD/MM/YYYY'];
+if (!moment(startDate, formats, true).isValid()) {
+  console.error('Invalid start date. Please enter a valid date in the format YYYY-MM-DD.');
+  process.exit(1);
+}
+
+// start date has to be Monday
+startDate = moment(startDate, formats, true);
+if (startDate.day() !== 1) {
+  console.error('Start date has to be a Monday.');
+  process.exit(1);
+}
+
+if (isNaN(durationWeeks) || Number(durationWeeks) <= 0 || Number(durationWeeks) > 52) {
+  console.error('Invalid duration. Please enter a number within 1-52.');
+  process.exit(1);
+}
+let durationDays = Number(durationWeeks) * 5;
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];
-console.log(holidays.length, 'days off this year!');
-
 let staff = loadStaffList('staff.txt');
+let staffLeave = loadStaffLeave('staffleave.txt', staff);
+
+console.log(startDate, 'for', durationWeeks, 'weeks');
+console.log(staffLeave);
+console.log(holidays.length, 'days off this year!');
 console.log(staff.length, 'staff');
 
-let dayCounter = 0, staffCounter = 10, holidayFlag = false;
-let nowDate = moment(startDate);
+let dayCounter = 0, holidayFlag = false;
+let nowDate = startDate;
 
 let roster = [];
+let amStaffCounter = 10, pmStaffCounter = 14, backupStaffCounter = 18;
 
 while (dayCounter < durationDays) {
   let week = nowDate.week();
@@ -81,23 +80,36 @@ while (dayCounter < durationDays) {
       Backup: '-'
     });
   } else {
+    let amStaff, pmStaff, backupStaff;
+    do {
+      amStaff = staff[amStaffCounter % staff.length];
+      amStaffCounter++;
+    } while (isStaffOnLeave(amStaff, nowDate, staffLeave));
+
+    do {
+      pmStaff = staff[pmStaffCounter % staff.length];
+      pmStaffCounter++;
+    } while (isStaffOnLeave(pmStaff, nowDate, staffLeave));
+
+    do {
+      backupStaff = staff[backupStaffCounter % staff.length];
+      backupStaffCounter++;
+    } while (isStaffOnLeave(backupStaff, nowDate, staffLeave));
+
     roster.push({
       Month: nowDate.format('MMMM'),
       Week: week,
       Date: dmy,
-      AM: staff[staffCounter % staff.length],
-      PM: staff[(staffCounter + 4) % staff.length],
-      Backup: staff[(staffCounter + 8) % staff.length]
+      AM: amStaff,
+      PM: pmStaff,
+      Backup: backupStaff
     });
   }
 
   nowDate = getNextWorkingDate(nowDate);
   dayCounter++;
-
-  if (!holidayFlag) { staffCounter++; }
 }
 
-fs.writeFileSync('roster.json', JSON.stringify(roster, null, 2));
-const csvParser = new Parser();
-const csvData = csvParser.parse(roster);
-fs.writeFileSync('roster.csv', csvData);
+writeToFile(roster);
+
+
