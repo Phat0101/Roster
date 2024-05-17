@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import roster from '../generate/roster.json';
 import './table.css';
-import { createEvents } from 'ics';
+import { generateICalendarFile } from '../utils/ical.js'
+import { generatePDF } from '../utils/pdf.js';
 import moment from 'moment';
-import { FaDownload } from 'react-icons/fa';
+
+import { IoCalendarSharp } from "react-icons/io5";
+import { FaFilePdf } from "react-icons/fa6";
+
 
 function Table({ darkMode }) {
   const [staffFilter, setStaffFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [icalErrorMessage, setErrorMessage] = useState(null);
+
 
   function handleStaffFilterChange(event) {
     setStaffFilter(event.target.value);
@@ -46,46 +53,17 @@ function Table({ darkMode }) {
     return Object.values(weeks);
   }
 
-  function generateICalendarFile(roster) {
-    const events = roster.map(item => {
-      const [day, month, year] = item.Date.split("/").map(Number);
-      if (item.AM === staffFilter) {
-        return {
-          start: [year, month, day, 9, 30],
-          duration: { hours: 3 },
-          title: `Roster for Morning`,
-          description: `Your backup: ${item.Backup}`,
-        };
-      } else if (item.PM === staffFilter) {
-        return {
-          start: [year, month, day, 12, 30],
-          duration: { hours: 3 },
-          title: `Roster for Afternoon`,
-          description: `Your backup: ${item.Backup}`,
-        };
-      } else if (item.Backup === staffFilter) {
-        return {
-          start: [year, month, day, 9, 30],
-          duration: { hours: 6 },
-          title: `Roster for Backup`,
-          description: `Morning: ${item.AM}\nAfternoon: ${item.PM}`,
-        };
-      }
-    });
-
-    const { error, value } = createEvents(events);
-    if (error) {
-      console.log(error);
-      return;
+  function handleICalendarButtonClick() {
+    try {
+      generateICalendarFile(getFilteredRoster(), staffFilter);
+    } catch (error) {
+      setErrorMessage(error.message);
     }
+  }
 
-    const eventFile = new Blob([value], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(eventFile);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'roster.ics';
-    link.click();
+  function handleGeneratePDFWithLoading() {
+    setIsGeneratingPDF(true);
+    generatePDF().finally(() => setIsGeneratingPDF(false));
   }
 
   // Get unique staff names
@@ -94,7 +72,7 @@ function Table({ darkMode }) {
   const months = Array.from(new Set(roster.map(item => item.Month)));
   const groupedRoster = groupByWeek(getFilteredRoster());
   return (
-    <div className={`p-6 ${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'}`}>
+    <div className={`${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'} p-1 sm:p-4 md:p-6`}>
       <div className="flex justify-between items-center mb-2">
         <div>
           <select value={staffFilter} onChange={handleStaffFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
@@ -110,9 +88,14 @@ function Table({ darkMode }) {
             ))}
           </select>
         </div>
-        <button onClick={() => generateICalendarFile(getFilteredRoster())} className="p-2 bg-blue-500 text-white rounded mt-2">
-          <FaDownload className="text-2xl " />
-        </button>
+        <div>
+          <button onClick={handleICalendarButtonClick} className="p-2 bg-blue-500 text-white rounded mt-2 mr-2">
+            <IoCalendarSharp className="text-2xl" />
+          </button>
+          <button onClick={handleGeneratePDFWithLoading} className="p-2 bg-blue-500 text-white rounded mt-2 mr-2">
+            <FaFilePdf className="text-2xl " />
+          </button>
+        </div>
       </div>
       <div className={`flex justify-end space-x-4 mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
         <div className="flex items-center">
@@ -128,41 +111,45 @@ function Table({ darkMode }) {
           <div>Backup</div>
         </div>
       </div>
-      {groupedRoster.map((week, index) => (
-        <table key={index} className="w-full mt-4 text-left border-collapse shadow-md">
-          <thead>
-            <tr>
-              <th className="p-2 border w-1/6">Week {week.Week}</th>
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
-                <th key={index} className="p-2 border w-1/6">
-                  {day} <br></br>
-                  {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMMM') : '-'}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr className='am-row'>
-              <td className="p-2 border">Morning</td>
-              {Array(5).fill().map((_, index) => (
-                <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.AM || '-'}</td>
-              ))}
-            </tr>
-            <tr className='pm-row'>
-              <td className="p-2 border">Afternoon</td>
-              {Array(5).fill().map((_, index) => (
-                <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.PM || '-'}</td>
-              ))}
-            </tr>
-            <tr className='backup-row'>
-              <td className="p-2 border">Backup</td>
-              {Array(5).fill().map((_, index) => (
-                <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      ))}
+      {icalErrorMessage && <p>{icalErrorMessage}</p>}
+      {isGeneratingPDF ? <p>Generating PDF...</p> : null}
+      <div id='rosterTable'>
+        {groupedRoster.map((week, index) => (
+          <table key={index} className="w-full mt-4 text-left border-collapse shadow-md">
+            <thead>
+              <tr>
+                <th className="p-2 border w-1/6">Week {week.Week}</th>
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
+                  <th key={index} className="p-2 border w-1/6">
+                    {day} <br></br>
+                    {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMMM') : '-'}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className='am-row'>
+                <td className="p-2 border">Morning</td>
+                {Array(5).fill().map((_, index) => (
+                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.AM || '-'}</td>
+                ))}
+              </tr>
+              <tr className='pm-row'>
+                <td className="p-2 border">Afternoon</td>
+                {Array(5).fill().map((_, index) => (
+                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.PM || '-'}</td>
+                ))}
+              </tr>
+              <tr className='backup-row'>
+                <td className="p-2 border">Backup</td>
+                {Array(5).fill().map((_, index) => (
+                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        ))}
+      </div>
     </div>
   );
 }
