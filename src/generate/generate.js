@@ -23,15 +23,17 @@ function isStaffOnLeave(staffName, currentDate, staffLeave) {
 }
 
 let args = minimist(process.argv.slice(2), {
-  string: ['startdate', 'weeks'],
+  string: ['startdate', 'weeks', 'startstaff'],
   default: {
     startdate: moment('2024-03-18').format('YYYY-MM-DD'),
-    weeks: 12
+    weeks: 12,
+    startstaff: ''
   }
 });
 
 let startDate = args.startdate;
 let durationWeeks = args.weeks;
+let staffName = args.startstaff;
 let formats = ['YYYY-MM-DD', 'DD-MM-YYYY', 'DDMMYYYY', 'DD/MM/YYYY'];
 if (!moment(startDate, formats, true).isValid()) {
   console.error('Invalid start date. Please enter a valid date in the format YYYY-MM-DD.');
@@ -49,9 +51,21 @@ if (isNaN(durationWeeks) || Number(durationWeeks) <= 0 || Number(durationWeeks) 
   console.error('Invalid duration. Please enter a number within 1-52.');
   process.exit(1);
 }
+
+let amStaffCounter = -1, pmStaffCounter = -1, backupStaffCounter = -1;
+let staff = loadStaffList('staff.txt');
+let staffIndex = staff.indexOf(staffName);
+if (staffIndex === -1) {
+  console.error('Invalid staff name. Please enter a valid staff name.');
+  process.exit(1);
+} else {
+  amStaffCounter = staffIndex;
+  pmStaffCounter = staffIndex + 4;
+  backupStaffCounter = staffIndex + 8;
+}
+
 let durationDays = Number(durationWeeks) * 5;
 let holidays = [...loadFromList('nswholidays.txt'), ...loadFromList('uniholidays.txt')];
-let staff = loadStaffList('staff.txt');
 let staffLeave = loadStaffLeave('staffleave.txt', staff);
 
 console.log(startDate, 'for', durationWeeks, 'weeks');
@@ -63,7 +77,6 @@ let dayCounter = 0, holidayFlag = false;
 let nowDate = startDate;
 
 let roster = [];
-let amStaffCounter = 10, pmStaffCounter = 14, backupStaffCounter = 18;
 
 while (dayCounter < durationDays) {
   let week = nowDate.week();

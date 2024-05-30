@@ -76,7 +76,7 @@ function Table({ darkMode }) {
       <div className="flex justify-between items-center mb-2">
         <div>
           <select value={staffFilter} onChange={handleStaffFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
-            <option value="">Select a staff</option>
+            <option value="">All staff</option>
             {staffNames.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
@@ -89,25 +89,25 @@ function Table({ darkMode }) {
           </select>
         </div>
         <div>
-          <button onClick={handleICalendarButtonClick} className="p-2 bg-blue-500 text-white rounded mt-2 mr-2">
+          <button onClick={handleICalendarButtonClick} className={`p-2 rounded mt-2 mr-2 ${darkMode ? 'bg-white text-black' : 'bg-blue-500 text-white'}`} title="Download iCalendar file">
             <IoCalendarSharp className="text-2xl" />
           </button>
-          <button onClick={handleGeneratePDFWithLoading} className="p-2 bg-blue-500 text-white rounded mt-2 mr-2">
+          <button onClick={handleGeneratePDFWithLoading} className={`p-2 rounded mt-2 mr-2 ${darkMode ? 'bg-white text-black' : 'bg-blue-500 text-white'}`} title="Download PDF">
             <FaFilePdf className="text-2xl " />
           </button>
         </div>
       </div>
       <div className={`flex justify-end space-x-4 mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
         <div className="flex items-center">
-          <div className="py-2 px-10 shadow-md no-underline rounded-full am-color"></div>
+          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'am-color'}`}></div>
           <div>9h30-12h30</div>
         </div>
         <div className="flex items-center">
-          <div className="py-2 px-10 shadow-md no-underline rounded-full pm-color"></div>
+          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'pm-color'}`}></div>
           <div>12h30-15h30</div>
         </div>
         <div className="flex items-center">
-          <div className="py-2 px-10 shadow-md no-underline rounded-full backup-color"></div>
+          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'backup-color'}`}></div>
           <div>Backup</div>
         </div>
       </div>
@@ -115,7 +115,7 @@ function Table({ darkMode }) {
       {isGeneratingPDF ? <p>Generating PDF...</p> : null}
       <div id='rosterTable'>
         {groupedRoster.map((week, index) => (
-          <table key={index} className="w-full mt-4 text-left border-collapse shadow-md">
+          <table key={index} className={`w-full mt-4 text-left border-collapse shadow-md ${darkMode} ? 'bg-gray-800 text-white' : 'bg-white text-black'`}>
             <thead>
               <tr>
                 <th className="p-2 border w-1/6">Week {week.Week}</th>
@@ -129,21 +129,21 @@ function Table({ darkMode }) {
             </thead>
             <tbody>
               <tr className='am-row'>
-                <td className="p-2 border">Morning</td>
+                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Morning</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.AM || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.AM || '-'}</td>
                 ))}
               </tr>
               <tr className='pm-row'>
-                <td className="p-2 border">Afternoon</td>
+                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Afternoon</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.PM || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.PM || '-'}</td>
                 ))}
               </tr>
               <tr className='backup-row'>
-                <td className="p-2 border">Backup</td>
+                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Backup</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
                 ))}
               </tr>
             </tbody>
