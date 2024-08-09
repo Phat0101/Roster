@@ -61,6 +61,10 @@ th:first-child, td:first-child {
   font-weight: bolder;
 }
 
+.highlight-current-day {
+  background-color: rgb(191, 195, 203);
+}
+
 @media screen and (max-width: 600px) {
 	th, td {
 	  font-size: 0.65em; 

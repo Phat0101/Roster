@@ -68,9 +68,14 @@ function Table({ darkMode }) {
 
   // Get unique staff names
   const staffNames = Array.from(new Set(roster.flatMap(item => [item.AM, item.PM, item.Backup])));
+
   // Get unique months
   const months = Array.from(new Set(roster.map(item => item.Month)));
   const groupedRoster = groupByWeek(getFilteredRoster());
+
+  // Get current day
+  const newCurrentDay = new Date('2024-08-05'); // sample date
+  const currentDay = moment(newCurrentDay).format('DD/MM/YYYY');
   return (
     <div className={`${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'} p-1 sm:p-4 md:p-6`}>
       <div className="flex justify-between items-center mb-2">
@@ -118,9 +123,13 @@ function Table({ darkMode }) {
           <table key={index} className={`w-full mt-4 text-left border-collapse shadow-md ${darkMode} ? 'bg-gray-800 text-white' : 'bg-white text-black'`}>
             <thead>
               <tr>
-                <th className="p-2 border w-1/6">Week {week.Week}</th>
+                <th className={`p-2 border w-1/6 ${darkMode ? 'text-white' : ''}`}>
+                  Week {week.Week}
+                </th>
                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
-                  <th key={index} className="p-2 border w-1/6">
+                  <th key={index} className={`p-2 border w-1/6 
+                  ${darkMode ? 'text-white' : ''}
+                  ${week.Days[index].Date === currentDay ? 'highlight-current-day' : ''}`}>
                     {day} <br></br>
                     {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMMM') : '-'}
                   </th>
@@ -131,19 +140,31 @@ function Table({ darkMode }) {
               <tr className='am-row'>
                 <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Morning</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.AM || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''} 
+                  ${darkMode ? 'bg-gray-700 text-white' : ''}
+                  ${week.Days[index].Date === currentDay ? 'highlight-current-day highlight' : ''}`}>
+                    {week.Days[index]?.AM || '-'}
+                  </td>
                 ))}
               </tr>
               <tr className='pm-row'>
                 <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Afternoon</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.PM || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''} 
+                  ${darkMode ? 'bg-gray-700 text-white' : ''}
+                   ${week.Days[index].Date === currentDay ? 'highlight-current-day highlight' : ''}`}>
+                    {week.Days[index]?.PM || '-'}
+                  </td>
                 ))}
               </tr>
               <tr className='backup-row'>
                 <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Backup</td>
                 {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
+                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''}
+                   ${darkMode ? 'bg-gray-700 text-white' : ''}
+                    ${week.Days[index].Date === currentDay ? 'highlight-current-day highlight' : ''}`}>
+                    {week.Days[index]?.Backup || '-'}
+                  </td>
                 ))}
               </tr>
             </tbody>
