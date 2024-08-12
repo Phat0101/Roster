@@ -74,8 +74,8 @@ function Table({ darkMode }) {
   const groupedRoster = groupByWeek(getFilteredRoster());
 
   // Get current day
-  const newCurrentDay = new Date('2024-08-05'); // sample date
-  const currentDay = moment(newCurrentDay).format('DD/MM/YYYY');
+  const currentDay = new Intl.DateTimeFormat('au-AU', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date());
+  console.log(currentDay);
   return (
     <div className={`${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'} p-1 sm:p-4 md:p-6`}>
       <div className="flex justify-between items-center mb-2">
