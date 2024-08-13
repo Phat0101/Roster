@@ -1,8 +1,8 @@
-John
+John, AM
 Andrew
-Shahid
-Guang
-Les
+Shahid, PM
+Guang, AM
+Les, AM
 Noshir
 Nathan
 Jim

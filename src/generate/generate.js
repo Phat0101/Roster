@@ -54,7 +54,7 @@ if (isNaN(durationWeeks) || Number(durationWeeks) <= 0 || Number(durationWeeks) 
 
 let amStaffCounter = -1, pmStaffCounter = -1, backupStaffCounter = -1;
 let staff = loadStaffList('staff.txt');
-let staffIndex = staff.indexOf(staffName);
+let staffIndex = staff.findIndex(s => s.name === staffName);
 if (staffIndex === -1) {
   console.error('Invalid staff name. Please enter a valid staff name.');
   process.exit(1);
@@ -109,13 +109,17 @@ while (dayCounter < durationDays) {
       backupStaffCounter++;
     } while (isStaffOnLeave(backupStaff, nowDate, staffLeave));
 
+    // swap shift based on staff preference for the day
+    if ((amStaff.preference === 'PM' && pmStaff.preference !== 'PM') || (amStaff.preference !== 'AM' && pmStaff.preference === 'AM')) {
+      [amStaff, pmStaff] = [pmStaff, amStaff];
+    }
     roster.push({
       Month: nowDate.format('MMMM'),
       Week: week,
       Date: dmy,
-      AM: amStaff,
-      PM: pmStaff,
-      Backup: backupStaff
+      AM: amStaff.name,
+      PM: pmStaff.name,
+      Backup: backupStaff.name
     });
   }
 

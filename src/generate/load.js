@@ -8,7 +8,16 @@ function loadStaffList(file) {
     elements = elements.filter(s => s.charAt(0) !== '#'); // Ignore lines starting with '#'
     elements = elements.filter(String); // Ignore empty lines
 
-    return elements;
+    let staffList = [];
+    for (let each of elements) {
+        let [name, preference] = each.split(', ');
+        if (!preference) {
+            preference = null;
+        }
+        staffList.push({ name, preference });
+    }
+
+    return staffList;
 }
 
 function loadFromList(file) {
@@ -46,7 +55,8 @@ function loadFromList(file) {
 function loadStaffLeave(file, staffList) {
     let elements = fs.readFileSync(file).toString().split('\n');
     elements = elements.filter(String); // Ignore empty lines
-
+    staffList = staffList.map(s => s.name);
+    
     let staffLeave = [];
     for (let element of elements) {
         let [staffName, dateRange] = element.split(', ');
