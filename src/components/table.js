@@ -4,9 +4,8 @@ import './table.css';
 import { generateICalendarFile } from '../utils/ical.js'
 import { generatePDF } from '../utils/pdf.js';
 import moment from 'moment';
-
-import { IoCalendarSharp } from "react-icons/io5";
-import { FaFilePdf } from "react-icons/fa6";
+import { CalendarIcon } from 'lucide-react';
+import { FaRegFilePdf } from "react-icons/fa6";
 
 
 function Table({ darkMode }) {
@@ -14,15 +13,6 @@ function Table({ darkMode }) {
   const [monthFilter, setMonthFilter] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [icalErrorMessage, setErrorMessage] = useState(null);
-
-
-  function handleStaffFilterChange(event) {
-    setStaffFilter(event.target.value);
-  }
-
-  function handleMonthFilterChange(event) {
-    setMonthFilter(event.target.value);
-  }
 
   function getFilteredRoster() {
     return roster.filter(item =>
@@ -68,87 +58,121 @@ function Table({ darkMode }) {
 
   // Get unique staff names
   const staffNames = Array.from(new Set(roster.flatMap(item => [item.AM, item.PM, item.Backup])));
+
   // Get unique months
   const months = Array.from(new Set(roster.map(item => item.Month)));
   const groupedRoster = groupByWeek(getFilteredRoster());
+
+  // Get current day
+  const currentDay = new Intl.DateTimeFormat('au-AU', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date());
+  console.log(currentDay);
   return (
-    <div className={`${darkMode ? 'text-black bg-gray-800' : 'text-black bg-white'} p-1 sm:p-4 md:p-6`}>
-      <div className="flex justify-between items-center mb-2">
-        <div>
-          <select value={staffFilter} onChange={handleStaffFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
-            <option value="">All staff</option>
-            {staffNames.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
-          <select value={monthFilter} onChange={handleMonthFilterChange} className="w-40 p-2 border-2 rounded ml-2 mt-2">
-            <option value="">Select a month</option>
-            {months.map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
+      <div className="container mx-auto px-2 py-4">
+        <div className="flex flex-wrap justify-between items-center mb-6">
+          <div className="flex flex-wrap gap-4 mb-4 md:mb-0">
+            <select
+              value={staffFilter}
+              onChange={(e) => setStaffFilter(e.target.value)}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+            >
+              <option value="">All staff</option>
+              {staffNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+            >
+              <option value="">All months</option>
+              {months.map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={handleICalendarButtonClick}
+              className={`p-2 rounded-md ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white transition duration-150 ease-in-out`}
+              title="Download iCalendar file"
+            >
+              <CalendarIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleGeneratePDFWithLoading}
+              className={`p-2 rounded-md ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white transition duration-150 ease-in-out`}
+              title="Download PDF"
+            >
+              <FaRegFilePdf className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        <div>
-          <button onClick={handleICalendarButtonClick} className={`p-2 rounded mt-2 mr-2 ${darkMode ? 'bg-white text-black' : 'bg-blue-500 text-white'}`} title="Download iCalendar file">
-            <IoCalendarSharp className="text-2xl" />
-          </button>
-          <button onClick={handleGeneratePDFWithLoading} className={`p-2 rounded mt-2 mr-2 ${darkMode ? 'bg-white text-black' : 'bg-blue-500 text-white'}`} title="Download PDF">
-            <FaFilePdf className="text-2xl " />
-          </button>
+        <div className="flex justify-end space-x-4 mb-4">
+          <div className="flex items-center">
+            <div className={`w-4 h-4 rounded-full mr-2 ${darkMode ? 'bg-blue-500' : 'bg-blue-400'}`}></div>
+            <span className="text-sm">9h30-12h30</span>
+          </div>
+          <div className="flex items-center">
+            <div className={`w-4 h-4 rounded-full mr-2 ${darkMode ? 'bg-green-500' : 'bg-green-400'}`}></div>
+            <span className="text-sm">12h30-15h30</span>
+          </div>
+          <div className="flex items-center">
+            <div className={`w-4 h-4 rounded-full mr-2 ${darkMode ? 'bg-yellow-500' : 'bg-yellow-400'}`}></div>
+            <span className="text-sm">Backup</span>
+          </div>
         </div>
-      </div>
-      <div className={`flex justify-end space-x-4 mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-        <div className="flex items-center">
-          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'am-color'}`}></div>
-          <div>9h30-12h30</div>
+        {icalErrorMessage && <p className="text-red-500 mb-4">{icalErrorMessage}</p>}
+        {isGeneratingPDF && <p className="text-green-500 mb-4">Generating PDF...</p>}
+        <div id="rosterTable" className="space-y-8">
+          {groupedRoster.map((week, weekIndex) => (
+            <div key={weekIndex} className={`overflow-hidden rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className={`px-4 py-5 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} sm:px-6`}>
+                <h3 className="text-lg leading-6 font-medium">Week {week.Week}</h3>
+              </div>
+              <div className="px-4 py-5 sm:p-6">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-100'}>
+                      <tr>
+                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
+                          <th key={index} className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+                            {day}<br />
+                            {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMM') : '-'}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      <tr className={darkMode ? 'bg-gray-800' : 'bg-white'}>
+                        {week.Days.map((day, dayIndex) => (
+                          <td key={dayIndex} className={`px-6 py-4 ${day.Date === currentDay ? 'bg-blue-100 dark:bg-blue-900' : ''}`}>
+                            <div className={`text-sm font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'} ${day.AM === staffFilter ? 'font-extrabold' : ''}`}>{day.AM || '-'}</div>
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={darkMode ? 'bg-gray-800' : 'bg-gray-white'}>
+                        {week.Days.map((day, dayIndex) => (
+                          <td key={dayIndex} className={`px-6 py-4 ${day.Date === currentDay ? 'bg-blue-100 dark:bg-blue-900' : ''}`}>
+                            <div className={`text-sm font-medium ${darkMode ? 'text-green-400' : 'text-green-600'} ${day.PM === staffFilter ? 'font-extrabold' : ''}`}>{day.PM || '-'}</div>
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={darkMode ? 'bg-gray-800' : 'bg-white'}>
+                        {week.Days.map((day, dayIndex) => (
+                          <td key={dayIndex} className={`px-6 py-4 ${day.Date === currentDay ? 'bg-blue-100 dark:bg-blue-900' : ''}`}>
+                            <div className={`text-sm font-medium ${darkMode ? 'text-yellow-400' : 'text-yellow-600'} ${day.Backup === staffFilter ? 'font-extrabold' : ''}`}>{day.Backup || '-'}</div>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center">
-          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'pm-color'}`}></div>
-          <div>12h30-15h30</div>
-        </div>
-        <div className="flex items-center">
-          <div className={`py-2 px-10 shadow-md no-underline rounded-full mr-2 ${darkMode ? 'bg-gray-700' : 'backup-color'}`}></div>
-          <div>Backup</div>
-        </div>
-      </div>
-      {icalErrorMessage && <p>{icalErrorMessage}</p>}
-      {isGeneratingPDF ? <p>Generating PDF...</p> : null}
-      <div id='rosterTable'>
-        {groupedRoster.map((week, index) => (
-          <table key={index} className={`w-full mt-4 text-left border-collapse shadow-md ${darkMode} ? 'bg-gray-800 text-white' : 'bg-white text-black'`}>
-            <thead>
-              <tr>
-                <th className="p-2 border w-1/6">Week {week.Week}</th>
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
-                  <th key={index} className="p-2 border w-1/6">
-                    {day} <br></br>
-                    {week.Days[index].Date ? moment(week.Days[index].Date, 'DD/MM/YYYY').format('D MMMM') : '-'}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className='am-row'>
-                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Morning</td>
-                {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.AM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.AM || '-'}</td>
-                ))}
-              </tr>
-              <tr className='pm-row'>
-                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Afternoon</td>
-                {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.PM === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.PM || '-'}</td>
-                ))}
-              </tr>
-              <tr className='backup-row'>
-                <td className={`p-2 border ${darkMode ? 'bg-gray-700 text-white' : ''}`}>Backup</td>
-                {Array(5).fill().map((_, index) => (
-                  <td key={index} className={`p-2 border ${week.Days[index]?.Backup === staffFilter ? 'highlight' : ''} ${darkMode ? 'bg-gray-700 text-white' : ''}`}>{week.Days[index]?.Backup || '-'}</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        ))}
       </div>
     </div>
   );
